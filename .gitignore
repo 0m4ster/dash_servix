@@ -53,6 +53,14 @@ log/
 .env.production
 .env.staging
 
+# FACTA sensitive files
+facta_token_info.json
+facta_token.txt
+facta_config.json
+*.token
+*.key
+*.pem
+
 # Temporary files
 *.tmp
 *.temp

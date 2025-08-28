@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta # Importar timedelta
+import time
+from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from facta_token_manager import get_facta_token, is_facta_token_valid
 from config import(
@@ -56,6 +57,10 @@ def render_excel_filter_ad_page():
             df_processed = process_excel_data(df_excel)
             
             if df_processed is not None:
+                # Inicializa df_filtrado_datas para garantir que sempre exista
+                df_filtrado_datas = df_processed.copy()
+                df_filtered_ad = pd.DataFrame() # Inicializa para garantir que sempre exista
+                
                 # Seção de filtro de datas
                 st.markdown("---")
                 st.markdown("""
@@ -173,25 +178,23 @@ def render_excel_filter_ad_page():
                         # Remover duplicatas baseado no CPF (se a coluna existir)
                         df_filtered_ad = handle_cpf_deduplication(df_filtered_ad_temp)
                         
-                    else:
+                    else: # Nenhuma data válida encontrada na coluna 'Data Criacao'
                         st.warning("⚠️ Nenhuma data válida encontrada na coluna 'Data Criacao' para definir o período.")
+                        st.info("📊 Aplicando filtro apenas por UTM source = 'ad'.")
                         # Se não há datas válidas, não podemos aplicar filtro de data.
                         # Apenas aplicar o filtro de UTM 'ad' e deduplicar.
                         df_filtered_ad_temp = df_processed[df_processed['utm source'] == 'ad'].copy()
                         df_filtered_ad = handle_cpf_deduplication(df_filtered_ad_temp)
-                        st.info(f"📊 Aplicando filtro apenas por UTM source = 'ad': {len(df_filtered_ad):,} clientes.")
-                        # Definir df_filtrado_datas como df_processed para métricas posteriores
-                        df_filtrado_datas = df_processed.copy()
+                        # df_filtrado_datas já foi inicializado como df_processed.copy()
                 
-                else:
+                else: # Coluna 'Data Criacao' não encontrada
                     st.warning("⚠️ Coluna 'Data Criacao' não encontrada no arquivo. Aplicando filtro apenas por UTM source = 'ad'.")
                     # Se não há coluna de data, aplicar filtro apenas por utm source
                     df_filtered_ad_temp = df_processed[df_processed['utm source'] == 'ad'].copy()
                     
                     # Remover duplicatas baseado no CPF (se a coluna existir)
                     df_filtered_ad = handle_cpf_deduplication(df_filtered_ad_temp)
-                    # Definir df_filtrado_datas como df_processed para métricas posteriores
-                    df_filtrado_datas = df_processed.copy()
+                    # df_filtrado_datas já foi inicializado como df_processed.copy()
                 
                 # Métricas do filtro aplicado (data + utm source)
                 st.markdown("---")
@@ -205,39 +208,39 @@ def render_excel_filter_ad_page():
                 col_metrics1, col_metrics2, col_metrics3, col_metrics4 = st.columns(4)
                 
                 with col_metrics1:
-                     st.markdown("""
+                    st.markdown("""
                      <div style="text-align: center; padding: 20px; background-color: #4caf50; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                          <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">✅ Clientes Filtrados</h5>
                          <p style="font-size: 24px; font-weight: bold; margin: 0;">{}</p>
-                     </div>
-                     """.format(f"{len(df_filtered_ad):,}"), unsafe_allow_html=True)
-                 
+                    </div>
+                    """.format(f"{len(df_filtered_ad):,}"), unsafe_allow_html=True)
+                
                 with col_metrics2:
-                     total_original = len(df_processed)
-                     percentual = (len(df_filtered_ad) / total_original * 100) if total_original > 0 else 0
-                     st.markdown("""
+                    total_original = len(df_processed)
+                    percentual = (len(df_filtered_ad) / total_original * 100) if total_original > 0 else 0
+                    st.markdown("""
                      <div style="text-align: center; padding: 20px; background-color: #2196f3; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                          <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">📊 % do Total</h5>
                          <p style="font-size: 24px; font-weight: bold; margin: 0;">{:.1f}%</p>
-                     </div>
-                     """.format(percentual), unsafe_allow_html=True)
-                 
+                    </div>
+                    """.format(percentual), unsafe_allow_html=True)
+                
                 with col_metrics3:
                      # Usar len(df_filtrado_datas) que já foi definido acima
-                     st.markdown("""
+                    st.markdown("""
                      <div style="text-align: center; padding: 20px; background-color: #ff9800; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                          <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">📅 No Período</h5>
                          <p style="font-size: 24px; font-weight: bold; margin: 0;">{}</p>
-                     </div>
+                    </div>
                      """.format(f"{len(df_filtrado_datas):,}"), unsafe_allow_html=True)
-                 
+                
                 with col_metrics4:
-                     st.markdown("""
+                    st.markdown("""
                      <div style="text-align: center; padding: 20px; background-color: #f44336; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                          <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">📋 Total Original</h5>
                          <p style="font-size: 24px; font-weight: bold; margin: 0;">{}</p>
-                     </div>
-                     """.format(f"{total_original:,}"), unsafe_allow_html=True)
+                    </div>
+                    """.format(f"{total_original:,}"), unsafe_allow_html=True)
                 
                 # Exibir dados filtrados
                 st.markdown("---")
@@ -281,28 +284,28 @@ def render_excel_filter_ad_page():
                     col_cpf1, col_cpf2, col_cpf3 = st.columns(3)
                     
                     with col_cpf1:
-                         st.markdown("""
+                        st.markdown("""
                          <div style="text-align: center; padding: 20px; background-color: #4caf50; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                              <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">🆔 CPFs Únicos</h5>
                              <p style="font-size: 24px; font-weight: bold; margin: 0;">{}</p>
-                         </div>
-                         """.format(f"{len(cpfs_limpos):,}"), unsafe_allow_html=True)
-                     
+                        </div>
+                        """.format(f"{len(cpfs_limpos):,}"), unsafe_allow_html=True)
+                    
                     with col_cpf2:
-                         st.markdown("""
+                        st.markdown("""
                          <div style="text-align: center; padding: 20px; background-color: #2196f3; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                              <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">📊 Total de Registros</h5>
                              <p style="font-size: 24px; font-weight: bold; margin: 0;">{}</p>
-                         </div>
-                         """.format(f"{len(df_filtered_ad):,}"), unsafe_allow_html=True)
-                     
+                        </div>
+                        """.format(f"{len(df_filtered_ad):,}"), unsafe_allow_html=True)
+                    
                     with col_cpf3:
-                         # Como já removemos duplicatas, este valor deve ser 0
-                         st.markdown("""
+                        # Como já removemos duplicatas, este valor deve ser 0
+                        st.markdown("""
                          <div style="text-align: center; padding: 20px; background-color: #ff9800; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                              <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">✅ Sem Duplicatas</h5>
                              <p style="font-size: 24px; font-weight: bold; margin: 0;">0</p>
-                         </div>
+                        </div>
                          """.format(f"{len(cpfs_limpos):,}"), unsafe_allow_html=True)
                     
                     # Exibir CPFs em formato de lista
@@ -373,31 +376,31 @@ def render_excel_filter_ad_page():
                                             
                                             # Métricas da consulta
                                             col_facta1, col_facta2, col_facta3, col_facta4, col_facta5, col_facta6 = st.columns(6)
-                                             
+                                            
                                             with col_facta1:
-                                                 st.markdown("""
+                                                st.markdown("""
                                                  <div style="text-align: center; padding: 20px; background-color: #4caf50; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                                                      <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">✅ Propostas</h5>
                                                      <p style="font-size: 24px; font-weight: bold; margin: 0;">{}</p>
-                                                 </div>
-                                                 """.format(f"{len(resultados_facta):,}"), unsafe_allow_html=True)
-                                             
+                                                </div>
+                                                """.format(f"{len(resultados_facta):,}"), unsafe_allow_html=True)
+                                            
                                             with col_facta2:
-                                                 st.markdown("""
+                                                st.markdown("""
                                                  <div style="text-align: center; padding: 20px; background-color: #2196f3; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                                                      <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">📊 Leads</h5>
                                                      <p style="font-size: 24px; font-weight: bold; margin: 0;">{}</p>
-                                                 </div>
-                                                 """.format(f"{len(cpfs_limpos):,}"), unsafe_allow_html=True)
-                                             
+                                                </div>
+                                                """.format(f"{len(cpfs_limpos):,}"), unsafe_allow_html=True)
+                                            
                                             with col_facta3:
-                                                 percentual_encontrado = (len(resultados_facta) / len(cpfs_limpos) * 100) if cpfs_limpos else 0
-                                                 st.markdown("""
+                                                percentual_encontrado = (len(resultados_facta) / len(cpfs_limpos) * 100) if cpfs_limpos else 0
+                                                st.markdown("""
                                                  <div style="text-align: center; padding: 20px; background-color: #ff9800; border-radius: 12px; color: white; min-height: 120px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                                                      <h5 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">📈 Contratos Gerados</h5>
                                                      <p style="font-size: 24px; font-weight: bold; margin: 0;">{:.1f}%</p>
-                                                 </div>
-                                                 """.format(percentual_encontrado), unsafe_allow_html=True)
+                                                </div>
+                                                """.format(percentual_encontrado), unsafe_allow_html=True)
                                              
                                             with col_facta4:
                                                  # Calcular total de valores AF das propostas encontradas
@@ -464,7 +467,7 @@ def render_excel_filter_ad_page():
                                                     mime="text/csv"
                                                 )
                                         else:
-                                            st.error("❌ Nenhum resultado encontrado na API FACTA.")
+                                            st.error("❌ Nenhum resultado encontrado na API FACTA para os CPFs filtrados.")
                                             
                                     except Exception as e:
                                         st.error(f"❌ Erro ao consultar API FACTA: {str(e)}")
@@ -503,12 +506,12 @@ def render_excel_filter_ad_page():
                     <p style="color: #7f8c8d; margin: 0;">Apenas clientes com utm source = "ad"</p>
                 </div>
                 <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3; min-width: 200px;">
-                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;">🆔 Extração de CPFs</h4>
-                    <p style="color: #7f8c8d; margin: 0;">Lista de CPFs dos clientes filtrados</p>
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;'>🆔 Extração de CPFs</h4>
+                    <p style="color: #7f8c8d; margin: 0;'>Lista de CPFs dos clientes filtrados</p>
                 </div>
                 <div style="background-color: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800; min-width: 200px;">
-                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;">📥 Download</h4>
-                    <p style="color: #7f8c8d; margin: 0;">Exportação em CSV/TXT dos CPFs</p>
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;'>📥 Download</h4>
+                    <p style="color: #7f8c8d; margin: 0;'>Exportação em CSV/TXT dos CPFs</p>
                 </div>
             </div>
         </div>
@@ -526,7 +529,7 @@ def process_excel_data(df: pd.DataFrame) -> pd.DataFrame:
         
         # Adicionar zeros à esquerda para CPFs com menos de 11 dígitos
         def padronizar_cpf(cpf):
-            if pd.isna(cpf) or cpf == 'nan' or cpf == '':
+            if pd.isna(cpf) or str(cpf).strip() in ['nan', 'None', '']:
                 return cpf
             
             # Remover pontos, traços e espaços
@@ -554,7 +557,7 @@ def process_excel_data(df: pd.DataFrame) -> pd.DataFrame:
         # Tentar converter para datetime, com tratamento de erros
         # 'coerce' transforma valores inválidos em NaT
         df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], errors='coerce')
-    
+        
     # Limpar e normalizar dados UTM
     utm_columns = ['utm source', 'utm medium', 'utm campaign']
     for col in utm_columns:
@@ -573,18 +576,19 @@ def handle_cpf_deduplication(df_temp: pd.DataFrame) -> pd.DataFrame:
     if 'CPF' not in df_temp.columns:
         return df_temp.copy()
     
-    total_antes = len(df_temp)
-    
+    # Criar uma cópia para evitar SettingWithCopyWarning
+    df_copy = df_temp.copy()
+
     # Remover CPFs nulos/vazios antes de deduplicar
-    df_temp = df_temp.dropna(subset=['CPF'])
-    df_temp = df_temp[df_temp['CPF'].astype(str).str.strip() != '']
+    df_copy = df_copy.dropna(subset=['CPF'])
+    df_copy = df_copy[df_copy['CPF'].astype(str).str.strip() != '']
     
     # Os CPFs já foram padronizados para 11 dígitos na função process_excel_data
     # Agora apenas limpar e verificar se estão corretos
-    df_temp['CPF_limpo'] = df_temp['CPF'].astype(str).str.strip()
+    df_copy['CPF_limpo'] = df_copy['CPF'].astype(str).str.strip()
     
     # Remover duplicatas mantendo a primeira ocorrência
-    df_filtered = df_temp.drop_duplicates(subset=['CPF_limpo'], keep='first').copy()
+    df_filtered = df_copy.drop_duplicates(subset=['CPF_limpo'], keep='first').copy()
     
     # Remover coluna temporária
     df_filtered = df_filtered.drop('CPF_limpo', axis=1)
@@ -651,25 +655,26 @@ def consultarandamento_propostas_facta(cpfs: list, token: str) -> pd.DataFrame:
                                 proposta['pagina_consulta'] = pagina_atual
                                 proposta['data_consulta'] = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
                             
-                            todas_propostas.extend(propostas)
-                            
-                            # Verificar se há mais páginas
-                            if len(propostas) < params['quantidade']:
-                                break
-                            else:
-                                pagina_atual += 1
-                                import time
-                                time.sleep(0.5)  # Aguardar para evitar rate limiting
+                        todas_propostas.extend(propostas)
+                        
+                        # Verificar se há mais páginas
+                        if len(propostas) < params['quantidade']:
+                            break
                         else:
-                            break  # Nenhuma proposta na página, parar
+                            pagina_atual += 1
+                            time.sleep(0.5)  # Aguardar para evitar rate limiting
                     else:
-                        break
+                        # Se 'erro' for True ou 'propostas' estiver vazio na primeira página, parar
+                        if pagina_atual == 1 and (data.get('erro', False) or not data.get('propostas')):
+                            break
+                        elif not data.get('propostas'): # Se não houver mais propostas, parar
+                            break
                         
                 elif response.status_code == 401:
                     st.error(f"❌ Erro na página {pagina_atual}: Token inválido ou expirado. Por favor, gere um novo token.")
                     break
                 elif response.status_code == 429:
-                    import time
+                    st.warning(f"⚠️ Limite de requisições atingido na página {pagina_atual}. Aguardando 5 segundos para tentar novamente...")
                     time.sleep(5)  # Aguardar mais tempo em caso de rate limit
                     continue
                 else:
@@ -677,7 +682,7 @@ def consultarandamento_propostas_facta(cpfs: list, token: str) -> pd.DataFrame:
                     break
                     
             except requests.exceptions.Timeout:
-                import time
+                st.warning(f"⏳ Tempo limite de requisição excedido na página {pagina_atual}. Tentando novamente em 2 segundos...")
                 time.sleep(2)  # Pequena pausa antes de tentar novamente
                 continue
             except requests.exceptions.RequestException as e:
@@ -692,7 +697,7 @@ def consultarandamento_propostas_facta(cpfs: list, token: str) -> pd.DataFrame:
             return pd.DataFrame()
         
         df_propostas = pd.DataFrame(todas_propostas)
-        
+            
         # Limpar CPFs para comparação
         cpfs_limpos_para_filtro = [str(cpf).replace('.', '').replace('-', '').strip() for cpf in cpfs]
         
@@ -716,6 +721,11 @@ def consultarandamento_propostas_facta(cpfs: list, token: str) -> pd.DataFrame:
         
         # Selecionar apenas colunas que existem no DataFrame
         colunas_disponiveis = [col for col in df_propostas_filtrado.columns if col in colunas_principais]
+        # Garantir que 'cpf' seja a primeira coluna se existir
+        if 'cpf' in colunas_disponiveis:
+            colunas_disponiveis.remove('cpf')
+            colunas_disponiveis.insert(0, 'cpf')
+
         outras_colunas = [col for col in df_propostas_filtrado.columns if col not in colunas_principais and col not in colunas_disponiveis]
         colunas_finais = colunas_disponiveis + outras_colunas
         
@@ -731,4 +741,3 @@ def consultarandamento_propostas_facta(cpfs: list, token: str) -> pd.DataFrame:
 
 if __name__ == "__main__":
     render_excel_filter_ad_page()
-
