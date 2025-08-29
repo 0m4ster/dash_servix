@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMjE5IiwibHZsIjoiMiIsInVzciI6Ijk3ODMyIiwiY3J0IjoiOTc4MzIiLCJpYXQiOjE3NTY0NzU0NzMsImV4cCI6MTc1NjQ3OTA3M30.cebZyr2QzEtcW-0T7MNAqBqz5SZ-fwDY1iEUBQ5g_p4", "timestamp": "2025-08-29T10:51:09.688204", "expires_at": "2025-08-29T11:51:09.688187", "source": "FACTA_API", "ambiente": "producao", "expira_api": "29/08/2025 11:51:13", "auth_method": "Basic Auth (FACTA)"}
+=======
+{"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMjE5IiwibHZsIjoiMiIsInVzciI6Ijk3ODMyIiwiY3J0IjoiOTc4MzIiLCJpYXQiOjE3NTY0NzI5MjIsImV4cCI6MTc1NjQ3NjUyMn0.b1VQH3mUFxsiU82Ml9E1SYx5CQ4DoSsQ8WWIgRP4VzA", "timestamp": "2025-08-29T10:08:38.270562", "expires_at": "2025-08-29T11:08:38.270545", "source": "FACTA_API", "ambiente": "producao", "expira_api": "29/08/2025 11:08:42", "auth_method": "Basic Auth (FACTA)"}
+>>>>>>> 762141df4e664ea10fd86f94989188704dadf91b

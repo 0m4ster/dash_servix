@@ -268,6 +268,7 @@ API_BASE_URL = KOLMEYA_API_BASE_URL
 API_ACCESSES_URL = KOLMEYA_API_ACCESSES_URL
 DEFAULT_TOKEN = KOLMEYA_DEFAULT_TOKEN
 
+<<<<<<< HEAD
 def get_brazil_datetime():
     """Retorna a data/hora atual no fuso horário brasileiro."""
     try:
@@ -313,6 +314,9 @@ def testar_conexao_api(token: str) -> bool:
     except Exception as e:
         # Não exibir erro detalhado, apenas retornar False
         return False
+=======
+
+>>>>>>> 762141df4e664ea10fd86f94989188704dadf91b
 
 
 
@@ -350,6 +354,8 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
         #     st.error("O período máximo permitido é de 7 dias.")
         #     return None
         
+
+        
         todos_dados = []
         total_registros_obtidos = 0
         
@@ -382,15 +388,24 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
                 payload["centro_custo"] = centro_custo
             
             try:
+
+                
                 response = requests.post(API_BASE_URL, headers=headers, json=payload, timeout=30)
+                
+
+                
                 response.raise_for_status() 
                 
                 data = response.json()
+                
+
                 
                 if 'messages' in data and data['messages']:
                     dados_obtidos_no_intervalo = data['messages']
                     todos_dados.extend(dados_obtidos_no_intervalo)
                     total_registros_obtidos += len(dados_obtidos_no_intervalo)
+                    
+
                 
                     if len(dados_obtidos_no_intervalo) >= API_LIMIT:
                         
@@ -406,13 +421,25 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
                                 if temp_end > temp_start:
                                     intervalos_para_buscar.insert(0, (temp_start, temp_end))
                                 temp_start = temp_end
+
                             
             except requests.exceptions.HTTPError as http_err:
                 # Tratar erro 422 silenciosamente (dados inválidos para o intervalo)
                 if http_err.response.status_code != 422:
+<<<<<<< HEAD
+=======
+
+                    # Apenas logar outros erros HTTP, mas continuar
+>>>>>>> 762141df4e664ea10fd86f94989188704dadf91b
                     continue
                 continue
+<<<<<<< HEAD
             except (requests.exceptions.RequestException, json.JSONDecodeError, Exception):
+=======
+            except (requests.exceptions.RequestException, json.JSONDecodeError, Exception) as e:
+
+                # Tratar todos os outros erros silenciosamente
+>>>>>>> 762141df4e664ea10fd86f94989188704dadf91b
                 continue
         
         progress_bar.empty()
@@ -422,6 +449,8 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
             # Token inválido ou sem dados - mostrar erro para debug
             st.error("❌ Nenhum dado retornado da API. Verifique o token e as datas.")
             return None
+        
+
         
         # Limpar e converter dados para DataFrame
         dados_limpos = []
@@ -450,6 +479,7 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
         # Remover duplicatas
         df.drop_duplicates(inplace=True)
         
+
         return df
         
     except Exception as e:
@@ -570,9 +600,9 @@ def obter_acessos_encurtador(start_at: str, end_at: str, token: str, tenant_segm
         
         # Converter tipos de dados
         if 'accessed_at' in df.columns:
-            df['accessed_at'] = pd.to_datetime(df['accessed_at'], errors='coerce')
+            df['accessed_at'] = pd.to_datetime(df['accessed_at'], dayfirst=True, errors='coerce')
         if 'job_created_at' in df.columns:
-            df['job_created_at'] = pd.to_datetime(df['job_created_at'], errors='coerce')
+            df['job_created_at'] = pd.to_datetime(df['job_created_at'], dayfirst=True, errors='coerce')
         if 'job_id' in df.columns:
             df['job_id'] = pd.to_numeric(df['job_id'], errors='coerce')
         if 'tenant_segment_id' in df.columns:
@@ -1552,7 +1582,7 @@ def process_excel_data(df: pd.DataFrame) -> pd.DataFrame:
         if 'Data Criacao' in df_processed.columns:
             try:
                 # Tentar converter para datetime
-                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], errors='coerce')
+                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], dayfirst=True, errors='coerce')
             except:
                 st.warning("⚠️ Não foi possível converter a coluna 'Data Criacao' para data.")
         
@@ -2024,7 +2054,7 @@ def process_excel_data(df: pd.DataFrame) -> pd.DataFrame:
         if 'Data Criacao' in df_processed.columns:
             try:
                 # Tentar converter para datetime
-                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], errors='coerce')
+                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], dayfirst=True, errors='coerce')
             except:
                 st.warning("⚠️ Não foi possível converter a coluna 'Data Criacao' para data.")
         
@@ -2316,9 +2346,7 @@ def main():
         st.subheader("🚀 Ações")
         
         # Botões organizados verticalmente
-        if st.button("🧪 Testar Conexão", type="secondary", use_container_width=True):
-            with st.spinner("Testando conexão..."):
-                testar_conexao_api(token)
+
         
         if st.button("🔍 Buscar Dados SMS, Acessos e FACTA", type="primary", use_container_width=True):
             st.session_state.buscar_dados = True
