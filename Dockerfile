@@ -26,5 +26,5 @@ COPY . .
 # Tornar o script executável
 RUN chmod +x start.sh
 
-# Comando para executar a aplicação via script
-CMD ["./start.sh"]
+# Usar ENTRYPOINT para garantir que o script seja executado corretamente
+ENTRYPOINT ["./start.sh"]
