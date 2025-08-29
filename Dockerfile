@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Tornar o script executável
-RUN chmod +x start.py
+RUN chmod +x start.sh
 
 # Usar ENTRYPOINT para garantir que o script seja executado corretamente
-ENTRYPOINT ["python", "start.py"]
+ENTRYPOINT ["./start.sh"]
