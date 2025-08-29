@@ -267,64 +267,9 @@ API_BASE_URL = KOLMEYA_API_BASE_URL
 API_ACCESSES_URL = KOLMEYA_API_ACCESSES_URL
 DEFAULT_TOKEN = KOLMEYA_DEFAULT_TOKEN
 
-def testar_conexao_api(token: str) -> bool:
-    """
-    Testa a conexão com a API usando dados de exemplo.
-    Retorna True se a conexão for bem-sucedida, False caso contrário.
-    """
-    try:
-        headers = {
-            'Accept': 'application/json',
-            'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json'
-        }
-        
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=2)
-        
-        payload = {
-            "start_at": start_date.strftime('%Y-%m-%d %H:%M'),
-            "end_at": end_date.strftime('%Y-%m-%d %H:%M'),
-            "limit": 1
-        }
-        
-        response = requests.post(API_BASE_URL, headers=headers, json=payload, timeout=10)
-        
-        if response.status_code == 200:
-            return True
-        else:
-            # Não exibir erro detalhado, apenas retornar False
-            return False
-            
-    except requests.exceptions.RequestException as e:
-        # Não exibir erro detalhado, apenas retornar False
-        return False
-    except Exception as e:
-        # Não exibir erro detalhado, apenas retornar False
-        return False
 
-def verificar_configuracao_api():
-    """
-    Verifica se as configurações da API estão sendo carregadas corretamente.
-    """
-    st.info("🔧 Verificando configuração da API...")
-    st.info(f"   API_BASE_URL: {API_BASE_URL}")
-    st.info(f"   API_ACCESSES_URL: {API_ACCESSES_URL}")
-    st.info(f"   DEFAULT_TOKEN: {DEFAULT_TOKEN[:10] if DEFAULT_TOKEN else 'Não configurado'}...")
-    
-    # Verificar se as URLs não são as padrões
-    if "kolmeya.com.br" not in API_BASE_URL:
-        st.warning("⚠️ API_BASE_URL pode não estar configurada corretamente")
-    
-    if "kolmeya.com.br" not in API_ACCESSES_URL:
-        st.warning("⚠️ API_ACCESSES_URL pode não estar configurada corretamente")
-    
-    if not DEFAULT_TOKEN or DEFAULT_TOKEN == "your_kolmeya_token_here":
-        st.error("❌ Token da API não configurado")
-        return False
-    
-    st.success("✅ Configuração da API verificada")
-    return True
+
+
 
 @st.cache_data(ttl=300)  # Cache por 5 minutos
 def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_custo: Optional[str] = None) -> Optional[pd.DataFrame]:
@@ -359,13 +304,7 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
             st.error("O período máximo permitido é de 7 dias.")
             return None
         
-        # Debug: Mostrar informações da requisição
-        st.info(f"🔍 Fazendo requisição para API Kolmeya:")
-        st.info(f"   URL: {API_BASE_URL}")
-        st.info(f"   Período: {start_at} até {end_at}")
-        st.info(f"   Token: {token[:10]}...")
-        if centro_custo:
-            st.info(f"   Centro de Custo: {centro_custo}")
+
         
         todos_dados = []
         total_registros_obtidos = 0
@@ -399,29 +338,24 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
                 payload["centro_custo"] = centro_custo
             
             try:
-                # Debug: Mostrar payload da requisição
-                if i == 1:  # Apenas na primeira requisição
-                    st.json(payload)
+
                 
                 response = requests.post(API_BASE_URL, headers=headers, json=payload, timeout=30)
                 
-                # Debug: Mostrar status da resposta
-                st.info(f"📡 Resposta da API: Status {response.status_code}")
+
                 
                 response.raise_for_status() 
                 
                 data = response.json()
                 
-                # Debug: Mostrar estrutura da resposta
-                if i == 1:  # Apenas na primeira requisição
-                    st.json(data)
+
                 
                 if 'messages' in data and data['messages']:
                     dados_obtidos_no_intervalo = data['messages']
                     todos_dados.extend(dados_obtidos_no_intervalo)
                     total_registros_obtidos += len(dados_obtidos_no_intervalo)
                     
-                    st.success(f"✅ Intervalo {i}: {len(dados_obtidos_no_intervalo)} registros obtidos")
+
                 
                     if len(dados_obtidos_no_intervalo) >= API_LIMIT:
                         
@@ -437,20 +371,18 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
                                 if temp_end > temp_start:
                                     intervalos_para_buscar.insert(0, (temp_start, temp_end))
                                 temp_start = temp_end
-                else:
-                    st.warning(f"⚠️ Intervalo {i}: Nenhum dado retornado")
+
                             
             except requests.exceptions.HTTPError as http_err:
                 # Tratar erro 422 silenciosamente (dados inválidos para o intervalo)
                 if http_err.response.status_code != 422:
-                    st.error(f"❌ Erro HTTP {http_err.response.status_code}: {http_err.response.text}")
+
                     # Apenas logar outros erros HTTP, mas continuar
                     continue
                 # Para erro 422, apenas continuar sem mostrar mensagem
-                st.warning(f"⚠️ Intervalo {i}: Erro 422 (dados inválidos para o intervalo)")
                 continue
             except (requests.exceptions.RequestException, json.JSONDecodeError, Exception) as e:
-                st.error(f"❌ Erro na requisição do intervalo {i}: {str(e)}")
+
                 # Tratar todos os outros erros silenciosamente
                 continue
         
@@ -458,14 +390,10 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
         status_text.empty()
         
         if not todos_dados:
-            st.error("❌ Nenhum dado foi retornado pela API Kolmeya. Verifique:")
-            st.error("   - Se o token está válido")
-            st.error("   - Se as URLs da API estão corretas")
-            st.error("   - Se o período solicitado tem dados")
-            st.error("   - Se há conectividade com a API")
+            # Token inválido ou sem dados - retornar silenciosamente
             return None
         
-        st.success(f"✅ Total de registros obtidos: {len(todos_dados)}")
+
         
         # Limpar e converter dados para DataFrame
         dados_limpos = []
@@ -494,11 +422,11 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
         # Remover duplicatas
         df.drop_duplicates(inplace=True)
         
-        st.success(f"✅ DataFrame final criado com {len(df)} registros")
+
         return df
         
     except Exception as e:
-        st.error(f"❌ Erro geral ao obter relatório SMS: {str(e)}")
+        st.error(f"Erro geral ao obter relatório SMS: {str(e)}")
         return None
 
 @st.cache_data(ttl=300)  # Cache por 5 minutos
@@ -1725,6 +1653,478 @@ def criar_grafico_timeline_excel(df: pd.DataFrame) -> go.Figure:
     
     return fig
 
+def render_excel_analysis_page():
+    """Renderiza a página de análise de dados Excel com colunas específicas."""
+    
+    # Header da página
+    st.markdown("""
+    <div style="text-align: center; padding: 20px 0;">
+        <h1 style="color: #2c3e50; margin-bottom: 10px;">📊 Análise de Dados Excel</h1>
+        <p style="color: #7f8c8d; font-size: 16px;">Upload e análise de tabelas Excel com colunas específicas</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Seção de upload
+    st.markdown("""
+    <div style="background-color: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0;">
+        <h3 style="color: #2c3e50; text-align: center; margin-bottom: 25px;">📁 Upload de Arquivo Excel</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Upload do arquivo
+    uploaded_file = st.file_uploader(
+        "📂 Carregar arquivo Excel",
+        type=['xlsx', 'xls'],
+        help="Faça upload de um arquivo Excel contendo as colunas: Data Criacao, utm source, utm medium, utm campaign"
+    )
+    
+    if uploaded_file is not None:
+        try:
+            # Ler o arquivo Excel
+            df_excel = pd.read_excel(uploaded_file)
+            st.session_state.df_excel_analysis = df_excel
+            
+            st.success(f"✅ Arquivo carregado com sucesso! {len(df_excel):,} registros encontrados.")
+            
+            # Verificar colunas esperadas
+            colunas_esperadas = ['Data Criacao', 'utm source', 'utm medium', 'utm campaign']
+            colunas_encontradas = []
+            colunas_faltando = []
+            
+            for coluna in colunas_esperadas:
+                if coluna in df_excel.columns:
+                    colunas_encontradas.append(coluna)
+                else:
+                    colunas_faltando.append(coluna)
+            
+            # Mostrar status das colunas
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <h5 style="color: #2c3e50; margin: 0 0 5px 0;">✅ Colunas Encontradas</h5>
+                    <p style="font-size: 16px; font-weight: bold; color: #2c3e50; margin: 0;">{}</p>
+                </div>
+                """.format(len(colunas_encontradas)), unsafe_allow_html=True)
+            
+            with col2:
+                if colunas_faltando:
+                    st.markdown("""
+                    <div style="background-color: #ffebee; padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
+                        <h5 style="color: #2c3e50; margin: 0 0 5px 0;">❌ Colunas Faltando</h5>
+                        <p style="font-size: 16px; font-weight: bold; color: #2c3e50; margin: 0;">{}</p>
+                    </div>
+                    """.format(len(colunas_faltando)), unsafe_allow_html=True)
+                else:
+                    st.markdown("""
+                    <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                        <h5 style="color: #2c3e50; margin: 0 0 5px 0;">✅ Todas as Colunas OK</h5>
+                        <p style="font-size: 16px; font-weight: bold; color: #2c3e50; margin: 0;">Perfeito!</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Listar colunas encontradas e faltando
+            if colunas_encontradas:
+                st.markdown("**✅ Colunas encontradas:**")
+                for col in colunas_encontradas:
+                    st.markdown(f"- {col}")
+            
+            if colunas_faltando:
+                st.markdown("**❌ Colunas faltando:**")
+                for col in colunas_faltando:
+                    st.markdown(f"- {col}")
+                st.warning("⚠️ Algumas colunas esperadas não foram encontradas. A análise pode ser limitada.")
+            
+            # Mostrar preview dos dados
+            with st.expander("👀 Visualizar dados do Excel"):
+                st.dataframe(df_excel.head(10), use_container_width=True)
+                
+                # Informações sobre as colunas
+                st.markdown("**📋 Informações das colunas:**")
+                for col in df_excel.columns:
+                    tipo = str(df_excel[col].dtype)
+                    nulos = df_excel[col].isnull().sum()
+                    st.markdown(f"- **{col}**: {tipo} ({nulos} valores nulos)")
+            
+            # Análise dos dados
+            if len(colunas_encontradas) >= 2:  # Pelo menos Data Criacao e uma coluna UTM
+                st.markdown("---")
+                st.markdown("""
+                <div style="background-color: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0;">
+                    <h3 style="color: #2c3e50; text-align: center; margin-bottom: 25px;">📊 Análise dos Dados</h3>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Processar dados
+                df_processed = process_excel_data(df_excel)
+                
+                if df_processed is not None:
+                    # Métricas gerais
+                    col_metrics1, col_metrics2, col_metrics3, col_metrics4 = st.columns(4)
+                    
+                    with col_metrics1:
+                        st.markdown("""
+                        <div style="text-align: center; padding: 15px; background-color: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+                            <h5 style="color: #2c3e50; margin: 0 0 5px 0;">📊 Total de Registros</h5>
+                            <p style="font-size: 20px; font-weight: bold; color: #2c3e50; margin: 0;">{}</p>
+                        </div>
+                        """.format(f"{len(df_processed):,}"), unsafe_allow_html=True)
+                    
+                    with col_metrics2:
+                        if 'Data Criacao' in df_processed.columns:
+                            datas_unicas = df_processed['Data Criacao'].nunique()
+                            st.markdown("""
+                            <div style="text-align: center; padding: 15px; background-color: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                                <h5 style="color: #2c3e50; margin: 0 0 5px 0;">📅 Datas Únicas</h5>
+                                <p style="font-size: 20px; font-weight: bold; color: #2c3e50; margin: 0;">{}</p>
+                            </div>
+                            """.format(f"{datas_unicas}"), unsafe_allow_html=True)
+                        else:
+                            st.markdown("""
+                            <div style="text-align: center; padding: 15px; background-color: #f5f5f5; border-radius: 8px; border-left: 4px solid #9e9e9e;">
+                                <h5 style="color: #2c3e50; margin: 0 0 5px 0;">📅 Datas Únicas</h5>
+                                <p style="font-size: 20px; font-weight: bold; color: #2c3e50; margin: 0;">N/A</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    with col_metrics3:
+                        if 'utm source' in df_processed.columns:
+                            sources_unicos = df_processed['utm source'].nunique()
+                            st.markdown("""
+                            <div style="text-align: center; padding: 15px; background-color: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">
+                                <h5 style="color: #2c3e50; margin: 0 0 5px 0;">🔗 UTM Sources</h5>
+                                <p style="font-size: 20px; font-weight: bold; color: #2c3e50; margin: 0;">{}</p>
+                            </div>
+                            """.format(f"{sources_unicos}"), unsafe_allow_html=True)
+                        else:
+                            st.markdown("""
+                            <div style="text-align: center; padding: 15px; background-color: #f5f5f5; border-radius: 8px; border-left: 4px solid #9e9e9e;">
+                                <h5 style="color: #2c3e50; margin: 0 0 5px 0;">🔗 UTM Sources</h5>
+                                <p style="font-size: 20px; font-weight: bold; color: #2c3e50; margin: 0;">N/A</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    with col_metrics4:
+                        if 'utm campaign' in df_processed.columns:
+                            campaigns_unicos = df_processed['utm campaign'].nunique()
+                            st.markdown("""
+                            <div style="text-align: center; padding: 15px; background-color: #fce4ec; border-radius: 8px; border-left: 4px solid #e91e63;">
+                                <h5 style="color: #2c3e50; margin: 0 0 5px 0;">📢 UTM Campaigns</h5>
+                                <p style="font-size: 20px; font-weight: bold; color: #2c3e50; margin: 0;">{}</p>
+                            </div>
+                            """.format(f"{campaigns_unicos}"), unsafe_allow_html=True)
+                        else:
+                            st.markdown("""
+                            <div style="text-align: center; padding: 15px; background-color: #f5f5f5; border-radius: 8px; border-left: 4px solid #9e9e9e;">
+                                <h5 style="color: #2c3e50; margin: 0 0 5px 0;">📢 UTM Campaigns</h5>
+                                <p style="font-size: 20px; font-weight: bold; color: #2c3e50; margin: 0;">N/A</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    # Filtros
+                    st.markdown("---")
+                    st.markdown("""
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">🔍 Filtros de Dados</h4>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    col_filter1, col_filter2, col_filter3 = st.columns(3)
+                    
+                    with col_filter1:
+                        # Filtro por Data Criacao
+                        if 'Data Criacao' in df_processed.columns:
+                            datas_disponiveis = sorted(df_processed['Data Criacao'].dropna().unique())
+                            if len(datas_disponiveis) <= 20:
+                                data_filter = st.multiselect(
+                                    "📅 Filtrar por Data de Criação",
+                                    options=datas_disponiveis,
+                                    default=datas_disponiveis
+                                )
+                            else:
+                                st.info("📅 Muitas datas únicas. Use o filtro de texto abaixo.")
+                                data_filter = []
+                        else:
+                            data_filter = []
+                    
+                    with col_filter2:
+                        # Filtro por UTM Source
+                        if 'utm source' in df_processed.columns:
+                            sources_disponiveis = sorted(df_processed['utm source'].dropna().unique())
+                            if len(sources_disponiveis) <= 20:
+                                source_filter = st.multiselect(
+                                    "🔗 Filtrar por UTM Source",
+                                    options=sources_disponiveis,
+                                    default=sources_disponiveis
+                                )
+                            else:
+                                st.info("🔗 Muitos sources únicos. Use o filtro de texto abaixo.")
+                                source_filter = []
+                        else:
+                            source_filter = []
+                    
+                    with col_filter3:
+                        # Filtro por UTM Campaign
+                        if 'utm campaign' in df_processed.columns:
+                            campaigns_disponiveis = sorted(df_processed['utm campaign'].dropna().unique())
+                            if len(campaigns_disponiveis) <= 20:
+                                campaign_filter = st.multiselect(
+                                    "📢 Filtrar por UTM Campaign",
+                                    options=campaigns_disponiveis,
+                                    default=campaigns_disponiveis
+                                )
+                            else:
+                                st.info("📢 Muitas campaigns únicas. Use o filtro de texto abaixo.")
+                                campaign_filter = []
+                        else:
+                            campaign_filter = []
+                    
+                    # Filtro de texto geral
+                    search_term = st.text_input(
+                        "🔍 Buscar em todas as colunas",
+                        help="Busca case-insensitive em todas as colunas"
+                    )
+                    
+                    # Aplicar filtros
+                    df_filtered = df_processed.copy()
+                    
+                    if data_filter and 'Data Criacao' in df_filtered.columns:
+                        df_filtered = df_filtered[df_filtered['Data Criacao'].isin(data_filter)]
+                    
+                    if source_filter and 'utm source' in df_filtered.columns:
+                        df_filtered = df_filtered[df_filtered['utm source'].isin(source_filter)]
+                    
+                    if campaign_filter and 'utm campaign' in df_filtered.columns:
+                        df_filtered = df_filtered[df_filtered['utm campaign'].isin(campaign_filter)]
+                    
+                    if search_term:
+                        mask_search = pd.DataFrame([
+                            df_filtered[col].astype(str).str.contains(search_term, case=False, na=False)
+                            for col in df_filtered.columns
+                        ]).any(axis=0)
+                        df_filtered = df_filtered[mask_search]
+                    
+                    # Exibir dados filtrados
+                    st.markdown("""
+                    <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 20px 0;">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">📊 Dados Filtrados ({})</h4>
+                    </div>
+                    """.format(f"{len(df_filtered):,} registros"), unsafe_allow_html=True)
+                    
+                    st.dataframe(df_filtered, use_container_width=True, hide_index=True)
+                    
+                    # Gráficos de análise
+                    if not df_filtered.empty:
+                        st.markdown("---")
+                        st.markdown("""
+                        <div style="background-color: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0;">
+                            <h3 style="color: #2c3e50; text-align: center; margin-bottom: 25px;">📈 Gráficos de Análise</h3>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Gráficos em colunas
+                        col_chart1, col_chart2 = st.columns(2)
+                        
+                        with col_chart1:
+                            if 'utm source' in df_filtered.columns:
+                                fig_source = criar_grafico_utm_source(df_filtered)
+                                st.plotly_chart(fig_source, use_container_width=True)
+                        
+                        with col_chart2:
+                            if 'utm campaign' in df_filtered.columns:
+                                fig_campaign = criar_grafico_utm_campaign(df_filtered)
+                                st.plotly_chart(fig_campaign, use_container_width=True)
+                        
+                        # Gráfico de timeline se houver data
+                        if 'Data Criacao' in df_filtered.columns:
+                            st.markdown("---")
+                            fig_timeline = criar_grafico_timeline_excel(df_filtered)
+                            st.plotly_chart(fig_timeline, use_container_width=True)
+                    
+                    # Download dos dados
+                    if not df_filtered.empty:
+                        st.markdown("---")
+                        csv_data = df_filtered.to_csv(index=False)
+                        st.download_button(
+                            label="📥 Download CSV - Dados Filtrados",
+                            data=csv_data,
+                            file_name=f"dados_excel_analisados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv"
+                        )
+                
+            else:
+                st.warning("⚠️ Dados insuficientes para análise. Pelo menos 'Data Criacao' e uma coluna UTM são necessárias.")
+                
+        except Exception as e:
+            st.error(f"❌ Erro ao processar arquivo Excel: {str(e)}")
+    else:
+        st.markdown("""
+        <div style="background-color: #f8f9fa; padding: 30px; border-radius: 12px; text-align: center; margin: 50px 0;">
+            <h3 style="color: #2c3e50; margin-bottom: 15px;">📊 Análise de Dados Excel</h3>
+            <p style="color: #7f8c8d; font-size: 16px; margin-bottom: 20px;">
+                Faça upload de um arquivo Excel contendo as seguintes colunas:
+            </p>
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+                <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50; min-width: 200px;">
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;">📅 Data Criacao</h4>
+                    <p style="color: #7f8c8d; margin: 0;">Data de criação dos registros</p>
+                </div>
+                <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3; min-width: 200px;">
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;">🔗 utm source</h4>
+                    <p style="color: #7f8c8d; margin: 0;">Fonte do tráfego</p>
+                </div>
+                <div style="background-color: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800; min-width: 200px;">
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;">📢 utm medium</h4>
+                    <p style="color: #7f8c8d; margin: 0;">Meio de aquisição</p>
+                </div>
+                <div style="background-color: #fce4ec; padding: 15px; border-radius: 8px; border-left: 4px solid #e91e63; min-width: 200px;">
+                    <h4 style="color: #2c3e50; margin: 0 0 10px 0;">🎯 utm campaign</h4>
+                    <p style="color: #7f8c8d; margin: 0;">Nome da campanha</p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+def process_excel_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Processa os dados do Excel para análise."""
+    try:
+        df_processed = df.copy()
+        
+        # Processar coluna de data se existir
+        if 'Data Criacao' in df_processed.columns:
+            try:
+                # Tentar converter para datetime
+                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], errors='coerce')
+            except:
+                st.warning("⚠️ Não foi possível converter a coluna 'Data Criacao' para data.")
+        
+        # Limpar dados UTM
+        utm_columns = ['utm source', 'utm medium', 'utm campaign']
+        for col in utm_columns:
+            if col in df_processed.columns:
+                # Converter para string e limpar
+                df_processed[col] = df_processed[col].astype(str).str.strip()
+                # Substituir valores nulos por 'N/A'
+                df_processed[col] = df_processed[col].replace(['nan', 'None', ''], 'N/A')
+        
+        return df_processed
+        
+    except Exception as e:
+        st.error(f"❌ Erro ao processar dados: {str(e)}")
+        return None
+
+def criar_grafico_utm_source(df: pd.DataFrame) -> go.Figure:
+    """Cria gráfico de barras para UTM Source."""
+    if df is None or df.empty or 'utm source' not in df.columns:
+        return go.Figure().update_layout(title="Distribuição de UTM Source (Sem Dados)")
+    
+    source_counts = df['utm source'].value_counts().head(10)  # Top 10
+    
+    fig = go.Figure(data=[go.Bar(
+        x=source_counts.values,
+        y=source_counts.index,
+        orientation='h',
+        marker_color='#2196f3',
+        text=source_counts.values,
+        textposition='auto',
+        textfont=dict(size=12, color='#333333')
+    )])
+    
+    fig.update_layout(
+        title={
+            'text': "Top 10 UTM Sources",
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 16, 'color': '#2c3e50'}
+        },
+        xaxis_title="Quantidade",
+        yaxis_title="UTM Source",
+        height=400,
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        font=dict(color='#333333'),
+        xaxis=dict(gridcolor='#e9ecef'),
+        yaxis=dict(gridcolor='#e9ecef')
+    )
+    
+    return fig
+
+def criar_grafico_utm_campaign(df: pd.DataFrame) -> go.Figure:
+    """Cria gráfico de barras para UTM Campaign."""
+    if df is None or df.empty or 'utm campaign' not in df.columns:
+        return go.Figure().update_layout(title="Distribuição de UTM Campaign (Sem Dados)")
+    
+    campaign_counts = df['utm campaign'].value_counts().head(10)  # Top 10
+    
+    fig = go.Figure(data=[go.Bar(
+        x=campaign_counts.values,
+        y=campaign_counts.index,
+        orientation='h',
+        marker_color='#e91e63',
+        text=campaign_counts.values,
+        textposition='auto',
+        textfont=dict(size=12, color='#333333')
+    )])
+    
+    fig.update_layout(
+        title={
+            'text': "Top 10 UTM Campaigns",
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 16, 'color': '#2c3e50'}
+        },
+        xaxis_title="Quantidade",
+        yaxis_title="UTM Campaign",
+        height=400,
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        font=dict(color='#333333'),
+        xaxis=dict(gridcolor='#e9ecef'),
+        yaxis=dict(gridcolor='#e9ecef')
+    )
+    
+    return fig
+
+def criar_grafico_timeline_excel(df: pd.DataFrame) -> go.Figure:
+    """Cria gráfico de linha temporal para dados Excel."""
+    if df is None or df.empty or 'Data Criacao' not in df.columns:
+        return go.Figure().update_layout(title="Evolução Temporal (Sem Dados)")
+    
+    # Agrupar por data
+    df_timeline = df.groupby(df['Data Criacao'].dt.date).size().reset_index(name='count')
+    df_timeline['Data Criacao'] = pd.to_datetime(df_timeline['Data Criacao'])
+    
+    fig = go.Figure(data=[go.Scatter(
+        x=df_timeline['Data Criacao'],
+        y=df_timeline['count'],
+        mode='lines+markers',
+        line=dict(color='#4caf50', width=3),
+        marker=dict(size=8, color='#4caf50'),
+        name="Registros por Dia"
+    )])
+    
+    fig.update_layout(
+        title={
+            'text': "Evolução de Registros ao Longo do Tempo",
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 16, 'color': '#2c3e50'}
+        },
+        xaxis_title="Data",
+        yaxis_title="Quantidade de Registros",
+        height=400,
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        font=dict(color='#333333'),
+        xaxis=dict(gridcolor='#e9ecef'),
+        yaxis=dict(gridcolor='#e9ecef')
+    )
+    
+    return fig
+
 def main():
     # Navegação entre páginas
     st.sidebar.markdown("## 📱 Navegação")
@@ -1788,17 +2188,6 @@ def main():
             type="password",
             help="Token Bearer para autenticação na API."
         )
-        
-        # Botão para testar configuração da API
-        if st.button("🔍 Testar Configuração da API", type="secondary", use_container_width=True):
-            verificar_configuracao_api()
-        
-        # Botão para testar conexão com a API
-        if st.button("📡 Testar Conexão da API", type="secondary", use_container_width=True):
-            if token:
-                testar_conexao_api(token)
-            else:
-                st.error("❌ Configure um token primeiro")
         
         st.markdown("---")
         st.subheader("📅 Período de Consulta")
@@ -1900,9 +2289,7 @@ def main():
         st.subheader("🚀 Ações")
         
         # Botões organizados verticalmente
-        if st.button("🧪 Testar Conexão", type="secondary", use_container_width=True):
-            with st.spinner("Testando conexão..."):
-                testar_conexao_api(token)
+
         
         if st.button("🔍 Buscar Dados SMS, Acessos e FACTA", type="primary", use_container_width=True):
             st.session_state.buscar_dados = True
