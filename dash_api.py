@@ -543,9 +543,9 @@ def obter_acessos_encurtador(start_at: str, end_at: str, token: str, tenant_segm
         
         # Converter tipos de dados
         if 'accessed_at' in df.columns:
-            df['accessed_at'] = pd.to_datetime(df['accessed_at'], errors='coerce')
+            df['accessed_at'] = pd.to_datetime(df['accessed_at'], dayfirst=True, errors='coerce')
         if 'job_created_at' in df.columns:
-            df['job_created_at'] = pd.to_datetime(df['job_created_at'], errors='coerce')
+            df['job_created_at'] = pd.to_datetime(df['job_created_at'], dayfirst=True, errors='coerce')
         if 'job_id' in df.columns:
             df['job_id'] = pd.to_numeric(df['job_id'], errors='coerce')
         if 'tenant_segment_id' in df.columns:
@@ -1525,7 +1525,7 @@ def process_excel_data(df: pd.DataFrame) -> pd.DataFrame:
         if 'Data Criacao' in df_processed.columns:
             try:
                 # Tentar converter para datetime
-                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], errors='coerce')
+                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], dayfirst=True, errors='coerce')
             except:
                 st.warning("⚠️ Não foi possível converter a coluna 'Data Criacao' para data.")
         
@@ -1997,7 +1997,7 @@ def process_excel_data(df: pd.DataFrame) -> pd.DataFrame:
         if 'Data Criacao' in df_processed.columns:
             try:
                 # Tentar converter para datetime
-                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], errors='coerce')
+                df_processed['Data Criacao'] = pd.to_datetime(df_processed['Data Criacao'], dayfirst=True, errors='coerce')
             except:
                 st.warning("⚠️ Não foi possível converter a coluna 'Data Criacao' para data.")
         
