@@ -1,19 +1,16 @@
 #!/bin/bash
 
+#!/bin/bash
+
 # Script de inicialização para Railway
 echo "🚀 Iniciando Dashboard SMS..."
 
-# Verificar variável PORT
-if [ -z "$PORT" ]; then
-    echo "⚠️ Variável PORT não definida, usando porta padrão 8501"
-    export PORT=8501
-fi
-
-echo "📡 Porta configurada: $PORT"
+# Railway usa porta 8080 por padrão
+echo "📡 Usando porta padrão do Railway: 8080"
 echo "🌐 Endereço: 0.0.0.0"
 
-# Configurar variável de ambiente para o Streamlit
-export STREAMLIT_SERVER_PORT=${PORT:-8501}
+# Configurar variáveis de ambiente para o Streamlit
+export STREAMLIT_SERVER_PORT=8080
 export STREAMLIT_SERVER_ADDRESS=0.0.0.0
 export STREAMLIT_SERVER_HEADLESS=true
 export STREAMLIT_SERVER_ENABLE_CORS=false
