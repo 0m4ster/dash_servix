@@ -23,8 +23,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar o resto do código
 COPY . .
 
+# Configurar Streamlit para Railway
+RUN mkdir -p .streamlit
+COPY railway-streamlit.toml .streamlit/config.toml
+
 # Tornar o script executável
-RUN chmod +x start.sh
+RUN chmod +x start_streamlit.py
 
 # Usar ENTRYPOINT para garantir que o script seja executado corretamente
-ENTRYPOINT ["./start.sh"]
+ENTRYPOINT ["python", "start_streamlit.py"]

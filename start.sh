@@ -17,8 +17,8 @@ env | grep -E "(PORT|STREAMLIT)" || echo "⚠️  Nenhuma variável PORT encontr
 
 # Usar a variável de ambiente PORT fornecida pela plataforma
 if [ -z "$PORT" ]; then
-    echo "⚠️  PORT não definido, usando porta padrão 8080"
-    export PORT=8080
+    echo "⚠️  PORT não definido, usando porta padrão 8501"
+    export PORT=8501
 else
     echo "📡 Usando porta: $PORT"
 fi
@@ -26,8 +26,8 @@ fi
 # Validar se PORT é um número
 if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
     echo "❌ ERRO: PORT '$PORT' não é um número válido!"
-    echo "💡 Usando porta padrão 8080"
-    export PORT=8080
+    echo "💡 Usando porta padrão 8501"
+    export PORT=8501
 fi
 
 echo "🌐 Endereço: 0.0.0.0"
