@@ -1,57 +1,43 @@
-# Git
-.git
-.gitignore
-
-# Python
-__pycache__
+# Arquivos de desenvolvimento
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-env
+env/
+venv/
+.venv/
 pip-log.txt
 pip-delete-this-directory.txt
-.tox
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git
-.mypy_cache
-.pytest_cache
-.hypothesis
 
-# IDEs
-.vscode
-.idea
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Temporary files
-*.tmp
-*.temp
+# Arquivos de configuração local
 .env
 .env.local
-.env.*.local
+.env.production
+facta_token.txt
+facta_token_info.json
+facta_config.json
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
 
 # Logs
 *.log
-logs/
 
-# Build artifacts
-build/
-dist/
-*.egg-info/
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arquivos de configuração que serão gerados dinamicamente
+.streamlit/config.toml

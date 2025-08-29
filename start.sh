@@ -12,7 +12,7 @@ fi
 
 # Verificar variáveis de ambiente
 echo "🔍 Variáveis de ambiente disponíveis:"
-env | grep -E "(PORT|STREAMLIT)" || echo "⚠️  Nenhuma variável PORT encontrada"
+env | grep -E "(PORT|STREAMLIT|RAILWAY)" || echo "⚠️  Nenhuma variável relevante encontrada"
 
 # Usar a variável de ambiente PORT fornecida pela plataforma
 if [ -z "$PORT" ]; then
@@ -68,7 +68,10 @@ level = "info"
 EOF
 
 echo "🔧 Configuração do Streamlit criada com porta $PORT"
+echo "📋 Conteúdo do config.toml:"
+cat .streamlit/config.toml
 
 # Iniciar Streamlit com a porta correta
 echo "🚀 Comando: streamlit run dash_api.py --server.port $PORT --server.address 0.0.0.0"
+echo "🌐 URL será: http://0.0.0.0:$PORT"
 exec streamlit run dash_api.py --server.port $PORT --server.address 0.0.0.0

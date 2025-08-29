@@ -21,5 +21,11 @@ COPY . .
 # Tornar o script executável
 RUN chmod +x start.sh
 
+# Criar diretório .streamlit se não existir
+RUN mkdir -p .streamlit
+
+# Expor a porta padrão (será sobrescrita pela variável PORT)
+EXPOSE 8501
+
 # Usar ENTRYPOINT para garantir que o script seja executado corretamente
 ENTRYPOINT ["./start.sh"]
