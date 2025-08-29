@@ -23,9 +23,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar o resto do código
 COPY . .
 
-# Expor porta do Streamlit (Railway usa 8080)
-EXPOSE 8080
-
 # Tornar o script executável
 RUN chmod +x start.sh
 

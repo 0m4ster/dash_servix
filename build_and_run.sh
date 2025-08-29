@@ -1,45 +1,24 @@
 #!/bin/bash
 
-echo "========================================"
-echo "    Build e Execucao do Dashboard"
-echo "========================================"
-echo
+echo "🚀 Iniciando Dashboard SMS..."
 
-echo "1. Parando containers existentes..."
-docker stop dash-dashboard 2>/dev/null
-docker rm dash-dashboard 2>/dev/null
+# Definir porta padrão para desenvolvimento local
+export PORT=${PORT:-8501}
 
-echo
-echo "2. Removendo imagem antiga..."
-docker rmi dash-dashboard 2>/dev/null
+echo "📡 Usando porta: $PORT"
+echo "🌐 Endereço: 0.0.0.0"
 
-echo
-echo "3. Fazendo build da nova imagem..."
-docker build -t dash-dashboard .
+# Configurar variáveis de ambiente para o Streamlit
+export STREAMLIT_SERVER_PORT=$PORT
+export STREAMLIT_SERVER_ADDRESS=0.0.0.0
+export STREAMLIT_SERVER_HEADLESS=true
+export STREAMLIT_SERVER_ENABLE_CORS=false
+export STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
 
-if [ $? -ne 0 ]; then
-    echo
-    echo "ERRO: Falha no build da imagem Docker!"
-    exit 1
-fi
+echo "🔧 Variáveis configuradas:"
+echo "   PORT: $STREAMLIT_SERVER_PORT"
+echo "   ADDRESS: $STREAMLIT_SERVER_ADDRESS"
 
-echo
-echo "4. Executando o container..."
-docker run -d --name dash-dashboard -p 8501:8501 dash-dashboard
-
-if [ $? -ne 0 ]; then
-    echo
-    echo "ERRO: Falha ao executar o container!"
-    exit 1
-fi
-
-echo
-echo "========================================"
-echo "    Dashboard executando com sucesso!"
-echo "========================================"
-echo
-echo "URL: http://localhost:8501"
-echo
-echo "Para parar o container: docker stop dash-dashboard"
-echo "Para ver logs: docker logs dash-dashboard"
-echo
+# Iniciar Streamlit com a porta correta
+echo "🌐 Iniciando Streamlit..."
+streamlit run dash_api.py --server.port $PORT --server.address 0.0.0.0
