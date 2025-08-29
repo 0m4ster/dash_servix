@@ -268,7 +268,6 @@ API_BASE_URL = KOLMEYA_API_BASE_URL
 API_ACCESSES_URL = KOLMEYA_API_ACCESSES_URL
 DEFAULT_TOKEN = KOLMEYA_DEFAULT_TOKEN
 
-<<<<<<< HEAD
 def get_brazil_datetime():
     """Retorna a data/hora atual no fuso horário brasileiro."""
     try:
@@ -314,10 +313,6 @@ def testar_conexao_api(token: str) -> bool:
     except Exception as e:
         # Não exibir erro detalhado, apenas retornar False
         return False
-=======
-
->>>>>>> 762141df4e664ea10fd86f94989188704dadf91b
-
 
 
 @st.cache_data(ttl=300)  # Cache por 5 minutos
@@ -426,20 +421,10 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
             except requests.exceptions.HTTPError as http_err:
                 # Tratar erro 422 silenciosamente (dados inválidos para o intervalo)
                 if http_err.response.status_code != 422:
-<<<<<<< HEAD
-=======
-
                     # Apenas logar outros erros HTTP, mas continuar
->>>>>>> 762141df4e664ea10fd86f94989188704dadf91b
                     continue
                 continue
-<<<<<<< HEAD
             except (requests.exceptions.RequestException, json.JSONDecodeError, Exception):
-=======
-            except (requests.exceptions.RequestException, json.JSONDecodeError, Exception) as e:
-
-                # Tratar todos os outros erros silenciosamente
->>>>>>> 762141df4e664ea10fd86f94989188704dadf91b
                 continue
         
         progress_bar.empty()

@@ -26,5 +26,8 @@ COPY . .
 # Expor porta do Streamlit
 EXPOSE 8501
 
-# Comando para executar a aplicação (Railway usa variável $PORT)
-CMD ["streamlit", "run", "dash_api.py", "--server.port=$PORT", "--server.address=0.0.0.0"]
+# Tornar o script executável
+RUN chmod +x start.sh
+
+# Comando para executar a aplicação via script
+CMD ["./start.sh"]
