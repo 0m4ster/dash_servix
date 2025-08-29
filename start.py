@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Script de inicialização do Streamlit para Railway
-Trata as variáveis de ambiente de forma mais robusta
 """
 
 import os
@@ -10,7 +9,7 @@ import subprocess
 import logging
 
 # Configurar logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def get_port():
@@ -37,9 +36,13 @@ address = "0.0.0.0"
 enableCORS = false
 enableXsrfProtection = false
 headless = true
+maxUploadSize = 200
 
 [browser]
 gatherUsageStats = false
+
+[logger]
+level = "info"
 """
     
     # Criar diretório .streamlit se não existir
