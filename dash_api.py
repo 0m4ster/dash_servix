@@ -2,8 +2,9 @@ import requests
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt  # Removido - usando plotly em vez de matplotlib
 from datetime import datetime, timedelta
+import pytz
 import json
 from typing import Dict, List, Optional
 from facta_token_manager import render_facta_token_page, get_facta_token, is_facta_token_valid
@@ -267,6 +268,16 @@ API_BASE_URL = KOLMEYA_API_BASE_URL
 API_ACCESSES_URL = KOLMEYA_API_ACCESSES_URL
 DEFAULT_TOKEN = KOLMEYA_DEFAULT_TOKEN
 
+def get_brazil_datetime():
+    """Retorna a data/hora atual no fuso horário brasileiro."""
+    try:
+        brazil_tz = pytz.timezone('America/Sao_Paulo')
+        return datetime.now(brazil_tz)
+    except Exception as e:
+        # Fallback para horário local se pytz não estiver disponível
+        st.warning(f"⚠️ Erro ao obter fuso horário brasileiro: {str(e)}. Usando horário local.")
+        return datetime.now()
+
 def testar_conexao_api(token: str) -> bool:
     """
     Testa a conexão com a API usando dados de exemplo.
@@ -279,7 +290,7 @@ def testar_conexao_api(token: str) -> bool:
             'Content-Type': 'application/json'
         }
         
-        end_date = datetime.now()
+        end_date = get_brazil_datetime()
         start_date = end_date - timedelta(days=2)
         
         payload = {
@@ -334,9 +345,10 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
         start_date_dt = datetime.strptime(start_at, '%Y-%m-%d %H:%M')
         end_date_dt = datetime.strptime(end_at, '%Y-%m-%d %H:%M')
         
-        if (end_date_dt - start_date_dt).days > 7:
-            st.error("O período máximo permitido é de 7 dias.")
-            return None
+        # Removida limitação de 7 dias para permitir consultas maiores
+        # if (end_date_dt - start_date_dt).days > 7:
+        #     st.error("O período máximo permitido é de 7 dias.")
+        #     return None
         
         todos_dados = []
         total_registros_obtidos = 0
@@ -398,19 +410,17 @@ def obter_relatorio_sms_paginado(start_at: str, end_at: str, token: str, centro_
             except requests.exceptions.HTTPError as http_err:
                 # Tratar erro 422 silenciosamente (dados inválidos para o intervalo)
                 if http_err.response.status_code != 422:
-                    # Apenas logar outros erros HTTP, mas continuar
                     continue
-                # Para erro 422, apenas continuar sem mostrar mensagem
                 continue
             except (requests.exceptions.RequestException, json.JSONDecodeError, Exception):
-                # Tratar todos os outros erros silenciosamente
                 continue
         
         progress_bar.empty()
         status_text.empty()
         
         if not todos_dados:
-            # Token inválido ou sem dados - retornar silenciosamente
+            # Token inválido ou sem dados - mostrar erro para debug
+            st.error("❌ Nenhum dado retornado da API. Verifique o token e as datas.")
             return None
         
         # Limpar e converter dados para DataFrame
@@ -2209,7 +2219,7 @@ def main():
         st.markdown("---")
         st.subheader("📅 Período de Consulta")
         
-        end_date_default = datetime.now()
+        end_date_default = get_brazil_datetime()
         start_date_default = end_date_default - timedelta(days=7)
         
         start_at_date = st.date_input(
@@ -2347,18 +2357,46 @@ def main():
         
         start_at_str = f"{st.session_state.start_date_api.strftime('%Y-%m-%d')} 00:00"
         
-        # Ajustar data final para não exceder o momento atual
-        now = datetime.now()
-        if st.session_state.end_date_api > now.date():
-            end_at_date_adjusted = now.date()
-            st.warning("⚠️ Data final ajustada para hoje (limite da API).")
-        else:
-            end_at_date_adjusted = st.session_state.end_date_api
+        # Usar a data selecionada pelo usuário sem ajuste automático
+        end_at_date_adjusted = st.session_state.end_date_api
         
-        if end_at_date_adjusted == now.date():
-            end_at_str = now.strftime('%Y-%m-%d %H:%M')
+        # Formatar data final com horário completo
+        end_at_str = f"{end_at_date_adjusted.strftime('%Y-%m-%d')} 23:59"
+        
+        # Debug: mostrar datas selecionadas pelo usuário
+
+        
+        # Verificar se a data final não excede o dia atual (com fuso horário brasileiro)
+        now_brazil = get_brazil_datetime()
+        today_brazil = now_brazil.date()
+        
+        # IMPORTANTE: A API NÃO aceita datas futuras e tem limite de horário
+        # Vamos usar o horário atual para garantir dados atualizados
+        if end_at_date_adjusted > today_brazil:
+            st.warning(f"⚠️ Data final ({end_at_date_adjusted}) excede o dia atual ({today_brazil}). Ajustando para agora.")
+            end_at_date_adjusted = today_brazil
+            end_at_str = f"{today_brazil.strftime('%Y-%m-%d')} {now_brazil.strftime('%H:%M')}"
+        elif end_at_date_adjusted == today_brazil:
+            # Se for hoje, usar horário atual (não 23:59)
+            end_at_str = f"{today_brazil.strftime('%Y-%m-%d')} {now_brazil.strftime('%H:%M')}"
         else:
-            end_at_str = f"{end_at_date_adjusted.strftime('%Y-%m-%d')} 23:59"
+            # Se for data passada, usar horário atual do dia
+            end_at_str = f"{end_at_date_adjusted.strftime('%Y-%m-%d')} {now_brazil.strftime('%H:%M')}"
+        
+        # Verificar se a data inicial não é muito antiga (a API pode ter limite)
+        if (today_brazil - st.session_state.start_date_api).days > 90:
+            st.warning("⚠️ Período muito longo detectado. A API pode ter limite de 90 dias.")
+            start_at_str = f"{(today_brazil - timedelta(days=90)).strftime('%Y-%m-%d')} 00:00"
+        
+        # Testar conexão com a API antes de fazer a busca principal
+        test_result = testar_conexao_api(st.session_state.token_api)
+        if not test_result:
+            st.error("❌ Falha na conexão com a API. Verifique o token e a conectividade.")
+            return
+        
+        # A API exige formato com horário - usar horário atual para garantir dados atualizados
+        start_at_str = f"{st.session_state.start_date_api.strftime('%Y-%m-%d')} 00:00"
+        # end_at_str já foi definido acima com horário atual
         
         with st.spinner("Buscando todos os seus envios no período selecionado... Isso pode levar alguns minutos para grandes volumes de dados."):
             df_sms = obter_relatorio_sms_paginado(
@@ -2695,15 +2733,19 @@ def main():
     if 'buscar_acessos' in st.session_state and st.session_state.buscar_acessos:
         start_at_accesses = f"{st.session_state.start_date_accesses.strftime('%Y-%m-%d')}"
         
-        # Ajustar data final para não exceder o momento atual
-        now = datetime.now()
-        if st.session_state.end_date_accesses > now.date():
-            end_at_accesses_adjusted = now.date()
-            st.warning("⚠️ Data final ajustada para hoje (limite da API).")
-        else:
-            end_at_accesses_adjusted = st.session_state.end_date_accesses
+        # Usar a data selecionada pelo usuário sem ajuste automático
+        end_at_accesses_adjusted = st.session_state.end_date_accesses
         
-        end_at_accesses = f"{end_at_accesses_adjusted.strftime('%Y-%m-%d')}"
+        # Verificar se a data final não excede o dia atual (com fuso horário brasileiro)
+        now_brazil = get_brazil_datetime()
+        today_brazil = now_brazil.date()
+        
+        if end_at_accesses_adjusted > today_brazil:
+            st.warning(f"⚠️ Data final de acessos ({end_at_accesses_adjusted}) excede o dia atual ({today_brazil}). Ajustando para agora.")
+            end_at_accesses_adjusted = today_brazil
+        
+        # IMPORTANTE: Usar horário atual para garantir dados atualizados
+        end_at_accesses = f"{end_at_accesses_adjusted.strftime('%Y-%m-%d')} {now_brazil.strftime('%H:%M')}"
         
         # Converter filtro de robô
         is_robot_value = None
@@ -2795,7 +2837,7 @@ def main():
             
             with col_access5:
                 if 'accessed_at' in df_acessos.columns:
-                    acessos_hoje = df_acessos[df_acessos['accessed_at'].dt.date == datetime.now().date()].shape[0]
+                    acessos_hoje = df_acessos[df_acessos['accessed_at'].dt.date == get_brazil_datetime().date()].shape[0]
                     st.markdown("""
                     <div style="text-align: center; padding: 15px; background-color: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
                         <h5 style="color: #2c3e50; margin: 0 0 5px 0;">📅 Acessos Hoje</h5>
@@ -2812,7 +2854,7 @@ def main():
             
             with col_access6:
                 if 'accessed_at' in df_acessos.columns:
-                    acessos_ontem = df_acessos[df_acessos['accessed_at'].dt.date == (datetime.now().date() - timedelta(days=1))].shape[0]
+                    acessos_ontem = df_acessos[df_acessos['accessed_at'].dt.date == (get_brazil_datetime().date() - timedelta(days=1))].shape[0]
                     st.markdown("""
                     <div style="text-align: center; padding: 15px; background-color: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">
                         <h5 style="color: #2c3e50; margin: 0 0 5px 0;">📅 Acessos Ontem</h5>
@@ -3452,11 +3494,25 @@ def main():
                             sizes = [cpfs_encontrados, cpfs_acessos - cpfs_encontrados]
                             colors = ['#4caf50', '#f44336']
                             
-                            # Gráfico de pizza simples
-                            fig, ax = plt.subplots(figsize=(8, 6))
-                            ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
-                            ax.axis('equal')
-                            st.pyplot(fig)
+                            # Gráfico de pizza usando plotly (mais consistente com o resto da aplicação)
+                            fig = go.Figure(data=[go.Pie(
+                                labels=labels,
+                                values=sizes,
+                                marker_colors=colors,
+                                textinfo='label+percent',
+                                textposition='outside',
+                                hole=0.3
+                            )])
+                            
+                            fig.update_layout(
+                                title="Distribuição de CPFs Encontrados vs Não Encontrados",
+                                height=400,
+                                showlegend=True,
+                                paper_bgcolor='white',
+                                plot_bgcolor='white'
+                            )
+                            
+                            st.plotly_chart(fig, use_container_width=True)
                     
                     # Seção destacada para Valor AF Total
                     if 'valor_af' in df_propostas_combinadas.columns:
